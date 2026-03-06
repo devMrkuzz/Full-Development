@@ -2,7 +2,9 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-
+import { ChatModule } from './chat/chat.module';
+import { RequestModule } from './requests/requests.module';
+import { HealthModule } from './health/health.module';
 @Module({
   imports: [
     TypeOrmModule.forRoot({
@@ -15,6 +17,9 @@ import { AppService } from './app.service';
       autoLoadEntities: true,
       synchronize: true,
     }),
+    ChatModule,
+    HealthModule,
+    RequestModule,
   ],
   controllers: [AppController],
   providers: [AppService],
