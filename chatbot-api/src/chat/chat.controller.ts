@@ -6,9 +6,13 @@ import { ChatService } from './chat.service';
   constructor (private readonly chatService: ChatService) {}
 
     @Post ()
-    async sendMessage(
-      @Body() body: {message: string; sessionId?: string },
-    ) {
-       return this.chatService.handleMessage(body.message, body.sessionId);
+    async sendMessage(@Body () body: any) {
+      const message = body?.message;
+
+      if (!message) {
+        return { error: 'Message is required',};
+      }
+
+      return this.chatService.handleMessage(message, body?.sessionId);
     }
  }

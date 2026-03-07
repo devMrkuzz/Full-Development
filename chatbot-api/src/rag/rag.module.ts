@@ -1,4 +1,8 @@
 import { Module } from '@nestjs/common';
+import { RagService } from './rag.service';
 
-@Module({})
+@Module({
+  providers: [RagService],
+  exports: [RagService],
+})
 export class RagModule {}

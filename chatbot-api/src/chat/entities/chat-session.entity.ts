@@ -7,7 +7,16 @@ export class ChatSession {
   id!: string;
 
   @Column({ default: 'auto' })
-  language!: 'auto' | 'en' | 'fil' | 'bik';
+  language!: string;
+
+  @Column({ default: false})
+  isRequestFlow!: boolean;
+
+  @Column({ type: 'varchar', nullable: true })
+  requestStep!: string | null;
+
+  @Column({type: 'varchar', nullable: true })
+  pendingDocumentType!: string | null;
 
   @CreateDateColumn()
   createdAt!: Date;
