@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ChatMessage } from './entities/chat-message.entity';
 import { ChatSession } from './entities/chat-session.entity';
-
+import { GeminiService } from '../gemini/gemini.service';
 @Injectable()
 export class ChatService {
     constructor(
@@ -11,42 +11,54 @@ export class ChatService {
         private readonly chatSessionRepo: Repository<ChatSession>,
         @InjectRepository(ChatMessage)
         private readonly chatMessageRepo: Repository<ChatMessage>,
+        private readonly geminiService: GeminiService,
      ) {}
 
-    async handleMessage(message: string) {
+    async handleMessage(message: string, sessionId?: string) {
+            let session: ChatSession | null = null;
 
-        //create new chat session
-        const session = this.chatSessionRepo.create({
-            language: 'auto',
-        });
-        const savedSession = await this.chatSessionRepo.save(session);
+            // If session is exist - continue
+            if (sessionId) {
+                session = await this.chatSessionRepo.findOne({
+                    where: { id: sessionId},
+                });
+            }
 
-        //save user message
-        const userMessage = this.chatMessageRepo.create({
-            session: savedSession,
-            role: 'user',
+            // if no session - create new one
+            if (!session) {
+                session = this.chatSessionRepo.create ({
+                    language: 'auto',
+                });
+
+                session = await this.chatSessionRepo.save(session);
+            }
+
+        // Save user message
+        const userMessage = this.chatMessageRepo.create ({
+            session, 
+            role: 'user', 
             content: message,
         });
         await this.chatMessageRepo.save(userMessage);
 
-        //temporary response
-        const botReplyText = 
-        "Hello! I am a chatbot. I can help you with various tasks. How can I assist you today?";
+        // Tempory bot reply
+        let botReplyText: string;
 
-        //save bot reply
-        const botMessage = this.chatMessageRepo.create({
-            session: savedSession,
+        try {
+            botReplyText = await this.geminiService.ask(message);
+        }catch (error) {
+            botReplyText = "Sorry, I'm having trouble processing your request right now.";
+        }
+        const botMessage = this.chatMessageRepo.create ({
+            session,
             role: 'assistant',
             content: botReplyText,
         });
         await this.chatMessageRepo.save(botMessage);
 
-        //return response
-
         return {
-            sessionId: savedSession.id,
-            userMessage: message,
+            sessionId: session.id,
             botReply: botReplyText,
-        };
+        }
     }
 }

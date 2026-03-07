@@ -5,8 +5,14 @@ import { AppService } from './app.service';
 import { ChatModule } from './chat/chat.module';
 import { RequestModule } from './requests/requests.module';
 import { HealthModule } from './health/health.module';
+import { ConfigModule } from '@nestjs/config';
+import { RagModule } from './rag/rag.module';
 @Module({
   imports: [
+
+    ConfigModule.forRoot ({
+      isGlobal: true,
+    }),
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: 'localhost',
@@ -17,9 +23,11 @@ import { HealthModule } from './health/health.module';
       autoLoadEntities: true,
       synchronize: true,
     }),
+  
     ChatModule,
     HealthModule,
     RequestModule,
+    RagModule,
   ],
   controllers: [AppController],
   providers: [AppService],
