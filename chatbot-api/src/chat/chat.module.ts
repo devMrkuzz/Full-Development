@@ -6,11 +6,12 @@ import { ChatController } from './chat.controller';
 import { ChatService } from './chat.service';
 import { GeminiModule } from '../gemini/gemini.module';
 import { RagModule } from '../rag/rag.module';
+import { DocumentRequest } from 'src/requests/entities/document-request.entity';
 
 @Module({
     imports: [
         TypeOrmModule.forFeature
-        ([ChatMessage, ChatSession]), GeminiModule, RagModule,
+        ([ChatMessage, ChatSession, DocumentRequest]), GeminiModule, RagModule,
     ],
     controllers: [ChatController],
     providers: [ChatService],

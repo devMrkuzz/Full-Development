@@ -12,25 +12,19 @@ export class DocumentRequest {
   requesterRole!: string;
 
   @Column()
-  fullName!: string;
+  requesterName!: string;
 
-  @Column({ nullable: true })
-  studentOrEmployeeId?: string;
-
-  @Column({ nullable: true })
-  email?: string;
-
-  @Column({ nullable: true })
-  contactNumber?: string;
+  @Column()
+  contactNumber!: string;
 
   @Column()
   documentType!: string;
 
-  @Column({ type: 'text', nullable: true })
-  purpose?: string;
+  @Column({type: 'text'})
+  purpose!: string;
 
   @Column({ default: 'PENDING' })
-  status!: 'PENDING' | 'ON_PROCESS' | 'RELEASED' | 'REJECTED';
+  status!: string;
 
   @CreateDateColumn()
   createdAt!: Date;
