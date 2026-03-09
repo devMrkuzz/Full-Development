@@ -6,11 +6,38 @@ import { DocumentRequest } from './entities/document-request.entity';
 export class RequestsController {
     constructor(private readonly requestsService: RequestsService) {}
 
+
+    @Get ('count/document-type/:documentType')
+    async getRequestCountByDocumentType(
+        @Param('documentType') documentType: string,
+    ): Promise<{documentType: string; total: number}> {
+        const total = await this.requestsService.countByDocumentType(documentType);
+        return { documentType, total};
+    }
+
     @Get()
     async getAllRequests(): Promise<DocumentRequest[]> {
         return this.requestsService.findAll();
     }
 
+    @Get('count/today')
+    async getTodayRequestCount(): Promise<{ total: number }> {
+        const total = await this.requestsService.countToday();
+        return { total };
+    }
+
+    @Get('count/month')
+    async getThisMonthRequestCount(): Promise< { total: number }> {
+        const total = await this.requestsService.countThisMonth();
+        return { total };
+    }
+
+    @Get('count/year')
+    async getThisYearRequestCount(): Promise< { total: number }> {
+        const total = await this.requestsService.countThisYear();
+        return { total };
+    }
+    
     @Get(':id') 
     async getRequestbyId(@Param('id') id: string): Promise<DocumentRequest | null> {
         return this.requestsService.findOne(id);
@@ -37,5 +64,6 @@ export class RequestsController {
         const total = await this.requestsService.countByStatus(status);
         return { status, total};
     }
+
 }
 
