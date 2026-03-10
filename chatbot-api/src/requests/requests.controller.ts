@@ -38,6 +38,32 @@ export class RequestsController {
         return { total };
     }
     
+    @Get('count/completed')
+    async genCompleteRequestCount():
+    Promise<{ total: number}> {
+        const total = await this.requestsService.countCompleted();
+        return { total };
+    }
+
+    @Get ('count/on-process')
+    async getOnProcessRequestCount():
+    Promise<{ total: number }> {
+        const total = await this.requestsService.countOnProcess();
+        return { total };
+    }
+
+    @Get('tracking/:trackingCode')
+    async getRequestByTrackingCode(
+        @Param('trackingCode') trackingCode: string,): Promise<DocumentRequest | null> {
+            return this.requestsService.findByTrackingCode(trackingCode);
+        }
+
+    @Get('status/:status')
+    async getRequestsByStatus(
+        @Param('status') status: string,): Promise<DocumentRequest[]> {
+            return this.requestsService.findByStatus(status);
+        }
+
     @Get(':id') 
     async getRequestbyId(@Param('id') id: string): Promise<DocumentRequest | null> {
         return this.requestsService.findOne(id);

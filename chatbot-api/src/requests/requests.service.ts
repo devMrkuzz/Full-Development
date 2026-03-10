@@ -51,7 +51,7 @@ export class RequestsService {
         async countByDocumentType(documentType: string): Promise<number> {
             return this.documentRequestRepo.count({
                 where: { documentType },
-            })
+            });
         }
 
         async countThisMonth(): Promise<number> {
@@ -81,6 +81,18 @@ export class RequestsService {
             .getCount();
         }
 
+        async countCompleted(): Promise<number> {
+            return this.documentRequestRepo.count({
+                where: { status: 'COMPLETED'},
+            });
+        }
+
+        async countOnProcess(): Promise<number> {
+            return this.documentRequestRepo.count({
+                where: { status: 'ON_PROCESS' },
+            });
+        }
+
         async countToday(): Promise<number> {
             const startOfDay = new Date();
             startOfDay.setHours(0, 0, 0, 0);
@@ -96,4 +108,17 @@ export class RequestsService {
             })
             .getCount();
         }
+
+        async findByTrackingCode(trackingCode: string): Promise<DocumentRequest | null> {
+            return this.documentRequestRepo.findOne({
+                where: { trackingCode },
+            });
+        }
+
+        async findByStatus(status: string): Promise<DocumentRequest[]>{
+            return this.documentRequestRepo.find({
+            where: { status },
+            order: { createdAt: 'DESC'}
+        });
+    }
 }
