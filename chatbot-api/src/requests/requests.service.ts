@@ -121,4 +121,50 @@ export class RequestsService {
             order: { createdAt: 'DESC'}
         });
     }
+
+    async findByDocumentType(documentType: string): Promise<DocumentRequest[]> {
+        return this.documentRequestRepo.find({
+            where: { documentType },
+            order: { createdAt: 'DESC' },
+        });
+    }
+
+    async findPaginated(page: number, limit: number): Promise<DocumentRequest[]> {
+        const skip = (page - 1) * limit;
+        return this.documentRequestRepo.find({
+            order: { createdAt: 'DESC'},
+            skip: skip,
+            take: limit,
+        });
+    }
+
+    async findSorted(order: 'ASC' | 'DESC'):
+    Promise<DocumentRequest[]> {
+        return this.documentRequestRepo.find ({
+            order: { createdAt: order },
+        })
+    }
+
+    async getDashboardStats() {
+        const total = await this.documentRequestRepo.count();
+
+        const pending = await this.documentRequestRepo.count({
+            where: { status: 'PENDING'},
+        });
+
+        const onProcess = await this.documentRequestRepo.count({
+            where: {status: 'ON_PROCESS'},
+        });
+
+        const completed = await this.documentRequestRepo.count({
+            where: { status: 'COMPLETED'},
+        });
+
+        return {
+            totalRequest: total,
+            pendingRequest: pending,
+            onProcessRequests: onProcess,
+            completedRequests: completed,
+        };
+    }
 }

@@ -1,6 +1,7 @@
 import { Controller, Get, Param, Patch, Body } from '@nestjs/common';
 import { RequestsService } from './requests.service';
 import { DocumentRequest } from './entities/document-request.entity';
+import { Query } from '@nestjs/common';
 
 @Controller('requests')
 export class RequestsController {
@@ -64,6 +65,36 @@ export class RequestsController {
             return this.requestsService.findByStatus(status);
         }
 
+    @Get('document-type/:documentType')
+    async getRequestDocumentType(
+        @Param('documentType') documentType: string, ): Promise<DocumentRequest[]> {
+            return this.requestsService.findByDocumentType(documentType);
+        }
+
+    @Get ('paginated')
+    async getPaginatedRequests(
+        @Query('page') page:string,
+        @Query('limit') limit:string, ): 
+        Promise<DocumentRequest[]> {
+            const pageNumber = parseInt(page) || 1;
+            const limitNumber = parseInt(limit) || 10;
+
+        return this.requestsService.findPaginated(pageNumber, limitNumber)
+        }
+
+    @Get ('sorted')
+    async getSortedRequests(
+        @Query('order') order: 'ASC' | 'DESC', ):
+        Promise<DocumentRequest[]> {
+            const sortOrder = order === 'ASC' ? 'ASC' : 'DESC';
+            return this.requestsService.findSorted(sortOrder);
+        }
+
+    @Get ('dashboard/stats')
+    async getDashboardStats() {
+        return this.requestsService.getDashboardStats();
+    }
+    
     @Get(':id') 
     async getRequestbyId(@Param('id') id: string): Promise<DocumentRequest | null> {
         return this.requestsService.findOne(id);

@@ -21,7 +21,16 @@ export class ChatService {
 
     private readonly geminiService: GeminiService,
     private readonly ragService: RagService,
-  ) {}
+
+  ){}
+
+    private async findRequestByTrackingCode(
+      trackingCode: string,
+    ): Promise<DocumentRequest | null> {
+      return this.documentRequestRepo.findOne({
+        where: { trackingCode },
+      })
+    }
 
   async handleMessage(message: string, sessionId?: string) {
     let session: ChatSession | null = null;
@@ -89,44 +98,53 @@ export class ChatService {
 
       botReplyText = `Thank you. Your document request has been recorded successfully. Your tracking code is ${trackingCode}. We will process your request and contact you soon.`;
     } else {
-      const lowerMessage = message.toLowerCase();
+      const trackingMatch = message.match (/REQ-\d+/i);
+      if (trackingMatch) {
+        const trackingCode = trackingMatch[0].toUpperCase();
+        const request = await this.findRequestByTrackingCode(trackingCode);
 
-      const isDocumentRequest =
-        lowerMessage.includes('request') ||
-        lowerMessage.includes('tor') ||
-        lowerMessage.includes('certificate') ||
-        lowerMessage.includes('document');
-
-      if (isDocumentRequest) {
-        let detectedDocumentType = 'DOCUMENT';
-
-        if (lowerMessage.includes('tor')) {
-          detectedDocumentType = 'TOR';
-        } else if (
-          lowerMessage.includes('certificate of enrollment') ||
-          lowerMessage.includes('coe')
-        ) {
-          detectedDocumentType = 'COE';
+        if (request) {
+          botReplyText = `Your request with tracking code ${trackingCode} is currently ${request.status}.`;
+        }else {
+          botReplyText = `No request was found with tracking code ${trackingCode}.`;
         }
+        }else {
+          const lowerMessage = message.toLocaleLowerCase();
 
-        session.isRequestFlow = true;
-        session.requestStep = 'full_name';
-        session.pendingDocumentType = detectedDocumentType;
+          const isDocumentRequest = 
+          lowerMessage.includes('request') ||
+          lowerMessage.includes('tor') ||
+          lowerMessage.includes('certificate') ||
+          lowerMessage.includes('document');
 
-        await this.chatSessionRepo.save(session);
+          if (isDocumentRequest) {
+            let detectedDocumentType = 'DOCUMENT';
 
-        botReplyText = `Sure. You are requesting ${detectedDocumentType}. Please provide your full name.`;
-      } else {
-        const ragAnswer = this.ragService.findRelevantAnswer(message);
+            if (lowerMessage.includes('tor')) {
+              detectedDocumentType = 'TOR';
+            }else if (lowerMessage.includes('certificate of enrollment') || lowerMessage.includes('coe')) {
+              detectedDocumentType = 'COE';
+            }
 
-        if (ragAnswer) {
-          botReplyText = ragAnswer;
-        } else {
-          botReplyText =
-            'AI service is currently unavailable. Please try again later.';
+            session.isRequestFlow = true,
+            session.requestStep = 'full_name',
+            session.pendingDocumentType = detectedDocumentType;
+
+            await this.chatSessionRepo.save(session);
+
+            botReplyText = `Sure. You are requesting ${detectedDocumentType}. Please provide your full name.`;
+          }else {
+            const ragAnswer = this.ragService.findRelevantAnswer(message);
+
+            if (ragAnswer){
+              botReplyText = ragAnswer;
+            }else {
+              const aiReply = await this.geminiService.ask(message);
+              botReplyText = aiReply;
+            }
+          }
         }
       }
-    }
 
     const botMessage = this.chatMessageRepo.create({
       session,
