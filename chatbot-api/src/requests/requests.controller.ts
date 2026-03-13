@@ -95,6 +95,18 @@ export class RequestsController {
         return this.requestsService.getDashboardStats();
     }
     
+    @Get('count/document-type/:documentType/status/:status')
+    async getRequestCountByDocumentTypeAndStatus(
+        @Param('documentType') documentType: string,
+        @Param('status') status: string,
+    ): Promise<{documentType: string; status: string; total: number}> {
+        const total = await this.requestsService.countDocumentTypeAndStatus(
+            documentType,
+            status,
+        );
+        return { documentType, status, total };
+    }
+
     @Get(':id') 
     async getRequestbyId(@Param('id') id: string): Promise<DocumentRequest | null> {
         return this.requestsService.findOne(id);

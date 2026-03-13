@@ -17,106 +17,104 @@ export class RequestsService {
             }
         });
     }
-     async findOne(id: string):
-        Promise<DocumentRequest | null> {
-            return this.documentRequestRepo.findOne({
-                where: { id },
+    
+    async findOne(id: string): Promise<DocumentRequest | null> {
+        return this.documentRequestRepo.findOne({
+            where: { id },
+        });
+    }
 
-            });
+    async updateStatus(id: string, status: string): Promise<DocumentRequest | null> {
+        const request = await this.documentRequestRepo.findOne({
+            where: { id },
+        });
+
+        if (!request) {
+            return null;
         }
 
-        async updateStatus(id: string, status: string): Promise<DocumentRequest | null> {
-            const request = await this.documentRequestRepo.findOne({
-                where: { id },
-            });
+        request.status = status;
+        return this.documentRequestRepo.save(request);
+    }
 
-            if (!request) {
-                return null;
-            }
+    async countAll(): Promise<number>{
+        return this.documentRequestRepo.count();
+    }
 
-            request.status = status;
-            return this.documentRequestRepo.save(request);
-        }
+    async countByStatus(status: string): Promise<number> {
+        return this.documentRequestRepo.count({
+            where: { status }
+        });
+    }
 
-        async countAll(): Promise<number>{
-            return this.documentRequestRepo.count();
-        }
+    async countByDocumentType(documentType: string): Promise<number> {
+        return this.documentRequestRepo.count({
+            where: { documentType },
+        });
+    }
 
-        async countByStatus(status: string): Promise<number> {
-            return this.documentRequestRepo.count({
-                where: { status }
-            });
-        }
+    async countThisMonth(): Promise<number> {
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
 
-        async countByDocumentType(documentType: string): Promise<number> {
-            return this.documentRequestRepo.count({
-                where: { documentType },
-            });
-        }
+        return this.documentRequestRepo
+        .createQueryBuilder('request')
+        .where('request.createdAt BETWEEN :start AND :end', {
+            start: startOfMonth,
+            end: endOfMonth,
+        })
+        .getCount();
+    }
 
-        async countThisMonth(): Promise<number> {
-           const now = new Date();
-            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-            const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+    async countThisYear(): Promise<number> {
+        const now = new Date();
+        const startOfYear = new Date(now.getFullYear(), 0, 1, 0, 0, 0, 0);
+        const endOfYear = new Date(now.getFullYear(), 11, 31, 23, 59, 59, 999);
 
-            return this.documentRequestRepo
-            .createQueryBuilder('request')
-            .where('request.createdAt BETWEEN :start AND :end', {
-                start: startOfMonth,
-                end: endOfMonth,
-            })
-            .getCount();
-        }
+        return this.documentRequestRepo
+        .createQueryBuilder('request')
+        .where('request.createdAt >= :startOfYear', {startOfYear})
+        .andWhere('request.createdAt <= :endOfYear', { endOfYear }) 
+        .getCount();
+    }
 
-        async countThisYear(): Promise<number> {
-            const now = new Date();
-            const startOfYear = new Date(now.getFullYear(), 0, 1, 0, 0, 0, 0);
-            const endOfYear = new Date(now.getFullYear(), 11, 31, 23, 59, 59, 999);
+    async countCompleted(): Promise<number> {
+        return this.documentRequestRepo.count({
+            where: { status: 'COMPLETED'},
+        });
+    }
 
-            return this.documentRequestRepo
-            .createQueryBuilder('request')
-            .where('request.createdAt >= :startOfYear', {startOfYear})
-            .andWhere('request.createdAt <= :endOfYear', { endOfYear }
-            ) 
-            .getCount();
-        }
+    async countOnProcess(): Promise<number> {
+        return this.documentRequestRepo.count({
+            where: { status: 'ON_PROCESS' },
+        });
+    }
 
-        async countCompleted(): Promise<number> {
-            return this.documentRequestRepo.count({
-                where: { status: 'COMPLETED'},
-            });
-        }
+    async countToday(): Promise<number> {
+        const startOfDay = new Date();
+        startOfDay.setHours(0, 0, 0, 0);
 
-        async countOnProcess(): Promise<number> {
-            return this.documentRequestRepo.count({
-                where: { status: 'ON_PROCESS' },
-            });
-        }
+        const endOfDay = new Date();
+        endOfDay.setHours(23, 59, 59, 999);
 
-        async countToday(): Promise<number> {
-            const startOfDay = new Date();
-            startOfDay.setHours(0, 0, 0, 0);
+        return this.documentRequestRepo
+        .createQueryBuilder('request')
+        .where('request.createdAt BETWEEN :start AND :end', {
+            start: startOfDay,
+            end: endOfDay,
+        })
+        .getCount();
+    }
 
-            const endOfDay = new Date();
-            endOfDay.setHours(23, 59, 59, 999);
+    async findByTrackingCode(trackingCode: string): Promise<DocumentRequest | null> {
+        return this.documentRequestRepo.findOne({
+            where: { trackingCode },
+        });
+    }
 
-            return this.documentRequestRepo
-            .createQueryBuilder('request')
-            .where('request.createdAt BETWEEN :start AND :end', {
-                start: startOfDay,
-                end: endOfDay,
-            })
-            .getCount();
-        }
-
-        async findByTrackingCode(trackingCode: string): Promise<DocumentRequest | null> {
-            return this.documentRequestRepo.findOne({
-                where: { trackingCode },
-            });
-        }
-
-        async findByStatus(status: string): Promise<DocumentRequest[]>{
-            return this.documentRequestRepo.find({
+    async findByStatus(status: string): Promise<DocumentRequest[]>{
+        return this.documentRequestRepo.find({
             where: { status },
             order: { createdAt: 'DESC'}
         });
@@ -138,11 +136,20 @@ export class RequestsService {
         });
     }
 
-    async findSorted(order: 'ASC' | 'DESC'):
-    Promise<DocumentRequest[]> {
-        return this.documentRequestRepo.find ({
+    async findSorted(order: 'ASC' | 'DESC'): Promise<DocumentRequest[]> {
+        return this.documentRequestRepo.find({
             order: { createdAt: order },
-        })
+        });
+    }
+
+    // Moved this method outside of getDashboardStats
+    async countDocumentTypeAndStatus(documentType: string, status: string): Promise<number> {
+        return this.documentRequestRepo.count({
+            where: {
+                documentType,
+                status,
+            }
+        });
     }
 
     async getDashboardStats() {

@@ -32,6 +32,42 @@ export class ChatService {
       })
     }
 
+private detectDocumentType(message: string): string | null {
+  const lowerMessage = message.toLowerCase();
+
+  if (
+    lowerMessage.includes('tor') ||
+    lowerMessage.includes('transcript of records') ||
+    lowerMessage.includes('transcript')
+  ) {
+    return 'TOR';
+  }
+
+  if (
+    lowerMessage.includes('coe') ||
+    lowerMessage.includes('certificate of enrollment') ||
+    lowerMessage.includes('enrollment certificate')
+  ) {
+    return 'COE';
+  }
+
+  if (
+    lowerMessage.includes('good moral') ||
+    lowerMessage.includes('certificate of good moral')
+  ) {
+    return 'GOOD_MORAL';
+  }
+
+  if (
+    lowerMessage.includes('grades') ||
+    lowerMessage.includes('report of grades')
+  ) {
+    return 'REPORT_OF_GRADES';
+  }
+
+  return null;
+}
+
   async handleMessage(message: string, sessionId?: string) {
     let session: ChatSession | null = null;
 
@@ -111,28 +147,23 @@ export class ChatService {
         }else {
           const lowerMessage = message.toLocaleLowerCase();
 
-          const isDocumentRequest = 
+          const detectedDocumentType = this.detectDocumentType(message);
+
+          const isDecoumentRequest = 
           lowerMessage.includes('request') ||
-          lowerMessage.includes('tor') ||
-          lowerMessage.includes('certificate') ||
-          lowerMessage.includes('document');
+          lowerMessage.includes('document') ||
+          detectedDocumentType !== null;
 
-          if (isDocumentRequest) {
-            let detectedDocumentType = 'DOCUMENT';
-
-            if (lowerMessage.includes('tor')) {
-              detectedDocumentType = 'TOR';
-            }else if (lowerMessage.includes('certificate of enrollment') || lowerMessage.includes('coe')) {
-              detectedDocumentType = 'COE';
-            }
+          if (isDecoumentRequest) {
+            const documentType = detectedDocumentType ?? 'DOCUMENT';
 
             session.isRequestFlow = true,
             session.requestStep = 'full_name',
-            session.pendingDocumentType = detectedDocumentType;
+            session.pendingDocumentType = documentType;
 
             await this.chatSessionRepo.save(session);
 
-            botReplyText = `Sure. You are requesting ${detectedDocumentType}. Please provide your full name.`;
+            botReplyText = `Sure. You are requesting ${documentType}. Please provide your full name.`;
           }else {
             const ragAnswer = this.ragService.findRelevantAnswer(message);
 
