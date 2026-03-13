@@ -40,13 +40,12 @@ export default function RegistrarDashboard() {
       headers: {
         "Content-Type": "application/json",
       },
-
       body: JSON.stringify({
         status: "ON PROCESS",
       }),
     });
 
-    const res = await fetch("http://locahost:3000/requests");
+    const res = await fetch("http://localhost:3000/requests"); // Fixed: localhost (was locahost)
     const data = await res.json();
     setRequests(data);
   };
